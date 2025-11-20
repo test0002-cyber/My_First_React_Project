@@ -1,0 +1,7 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+export default function Header({ sidebarOpen, setSidebarOpen }) {
+    const { user, logout } = useAuth();
+    return (_jsxs("header", { className: "bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("button", { onClick: () => setSidebarOpen(!sidebarOpen), className: "p-2 hover:bg-gray-100 rounded-lg transition-colors", children: sidebarOpen ? _jsx(X, { size: 24 }) : _jsx(Menu, { size: 24 }) }), _jsxs("div", { children: [_jsx("h1", { className: "text-2xl font-bold text-gray-900", children: "GMB Review Analytics" }), _jsx("p", { className: "text-sm text-gray-600", children: "Google Business Profile Insights Dashboard" })] })] }), _jsxs("div", { className: "flex items-center gap-4", children: [_jsxs("div", { className: "text-right hidden sm:block", children: [_jsx("p", { className: "text-sm font-medium text-gray-900", children: user?.name || 'Your Business' }), _jsxs("p", { className: "text-xs text-gray-600", children: ["Role: ", user?.role] })] }), _jsxs("button", { onClick: logout, className: "p-2 rounded hover:bg-gray-100 flex items-center gap-2", children: [_jsx(LogOut, { size: 16 }), _jsx("span", { className: "text-sm text-gray-700", children: "Logout" })] })] })] }));
+}
