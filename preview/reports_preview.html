@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reports UI Preview</title>
+  <style>
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin: 24px; background:#f7fafc; color:#0f172a }
+    .container { max-width: 1100px; margin: 0 auto }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px }
+    h1 { font-size:24px; margin:0 }
+    .card { background:white; border-radius:8px; padding:16px; box-shadow: 0 1px 2px rgba(16,24,40,0.05); margin-bottom:12px }
+    .grid { display:grid; grid-template-columns:2fr 1fr; gap:16px }
+    label { display:block; margin-bottom:6px; font-weight:600; color:#334155 }
+    input, select { width:100%; padding:8px 10px; border:1px solid #e2e8f0; border-radius:6px }
+    .btn { padding:8px 12px; border-radius:6px; cursor:pointer; border: none }
+    .btn-primary { background:#2563eb; color:white }
+    .btn-green { background:#16a34a; color:white }
+    .btn-yellow { background:#f59e0b; color:white }
+    .btn-ghost { background:#e6eefc; color:#0f172a }
+    .metrics { display:flex; gap:12px }
+    .metric { background:#fff; padding:12px; border-radius:8px; min-width:110px; text-align:center }
+    .small { font-size:12px; color:#64748b }
+    .list-item { border:1px solid #e6eefc; padding:10px; border-radius:6px; margin-bottom:8px; background:#fff }
+    .row { display:flex; justify-content:space-between; align-items:center }
+    .tag { font-size:12px; padding:4px 8px; background:#eef2ff; border-radius:999px }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Reports</h1>
+        <p class="small">Export insights and schedule recurring reports (Email / WhatsApp)</p>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:22px; font-weight:700; color:#2563eb">3</div>
+        <div class="small">Available Metrics</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+              <h3 style="margin:0 0 6px 0">Export</h3>
+              <div class="small">Export the current metrics as CSV for offline analysis</div>
+            </div>
+            <div style="display:flex; gap:8px">
+              <button id="exportCsvBtn" class="btn btn-primary">Export CSV</button>
+              <button id="runNowBtn" class="btn btn-yellow">Run Scheduled Now</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Schedule Report</h3>
+          <div style="display:grid; gap:8px">
+            <div>
+              <label>Report Type</label>
+              <select id="reportType">
+                <option value="executive">Executive Summary</option>
+                <option value="locations">Location Roll-up</option>
+                <option value="top_reviews">Top Reviews</option>
+                <option value="sentiment">Sentiment Summary</option>
+              </select>
+            </div>
+            <div>
+              <label>Recipients (comma separated)</label>
+              <input id="recipients" placeholder="name@company.com,+1234567890" />
+            </div>
+            <div>
+              <label>Channel</label>
+              <div style="display:flex; gap:8px">
+                <button class="btn btn-ghost" id="channelEmail">Email</button>
+                <button class="btn btn-ghost" id="channelWhats">WhatsApp</button>
+              </div>
+            </div>
+            <div>
+              <label>Frequency</label>
+              <select id="frequency">
+                <option value="daily">Daily</option>
+                <option value="weekly" selected>Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="once">Once</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end">
+              <button id="scheduleBtn" class="btn btn-green">Schedule</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Metrics</h4>
+          <div class="metrics">
+            <div class="metric"><div class="small">Avg Rating</div><div style="font-weight:700">4.3</div></div>
+            <div class="metric"><div class="small">Total Reviews</div><div style="font-weight:700">123</div></div>
+            <div class="metric"><div class="small">Response Rate</div><div style="font-weight:700">32%</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Scheduled Reports</h4>
+          <div id="scheduledList">
+            <div class="list-item row"><div><div style="font-weight:600">Weekly executive report</div><div class="small">weekly • email • 2 recipients</div></div><div><button class="btn btn-primary" onclick="sendNowSample()">Send Now</button></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Sent Reports</h4>
+          <div id="sentList">
+            <!-- sent items will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // sample data
+    const sampleData = [
+      { metric: 'Average Rating', value: 4.3 },
+      { metric: 'Total Reviews', value: 123 },
+      { metric: 'Response Rate', value: 32 }
+    ]
+
+    function csvFromMetrics(metrics) {
+      const header = ['metric','value']
+      const rows = metrics.map(m => `${JSON.stringify(m.metric)},${JSON.stringify(m.value)}`)
+      return [header.join(','), ...rows].join('\n')
+    }
+
+    function base64FromString(s) {
+      return btoa(unescape(encodeURIComponent(s)))
+    }
+
+    function addSent(subject, channel, attachment) {
+      const sentList = document.getElementById('sentList')
+      const id = Date.now()
+      const el = document.createElement('div')
+      el.className = 'list-item'
+      let html = `<div style="font-weight:600">${subject}</div><div class="small">${channel} • ${new Date().toLocaleString()}</div>`
+      if (attachment) {
+        html += `<div style="margin-top:8px; display:flex; gap:8px"><button class="btn btn-primary" onclick="(function(a){return function(){downloadAttachment(a)}})(\'${attachment.filename}\|${attachment.contentBase64}\')">Download</button><button class="btn btn-ghost" onclick="(function(a){return function(){previewAttachment(a)}})(\'${attachment.filename}\|${attachment.contentBase64}\')">Preview</button></div>`
+      }
+      el.innerHTML = html
+      sentList.insertBefore(el, sentList.firstChild)
+    }
+
+    function parseAttachmentArg(arg) {
+      const [filename, contentBase64] = arg.split('|')
+      return { filename, contentBase64 }
+    }
+
+    window.downloadAttachment = function(arg) {
+      const att = parseAttachmentArg(arg)
+      const byteCharacters = atob(att.contentBase64)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i)
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = att.filename || 'report.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    }
+
+    window.previewAttachment = function(arg) {
+      const att = parseAttachmentArg(arg)
+      const url = `data:text/csv;base64,${att.contentBase64}`
+      window.open(url, '_blank')
+    }
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const csv = csvFromMetrics(sampleData)
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'report.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    })
+
+    document.getElementById('runNowBtn').addEventListener('click', () => {
+      // generate base64 CSV and add to sent list
+      const csv = csvFromMetrics(sampleData)
+      const contentBase64 = base64FromString(csv)
+      const att = { filename: `manual-${Date.now()}.csv`, contentBase64 }
+      addSent('Manual Run', 'email', att)
+      alert('Generated and sent (simulated)')
+    })
+
+    document.getElementById('scheduleBtn').addEventListener('click', () => {
+      const type = document.getElementById('reportType').value
+      const recips = document.getElementById('recipients').value || ''
+      const freq = document.getElementById('frequency').value
+      const channel = document.getElementById('channelEmail').classList.contains('btn-ghost') ? 'email' : 'whatsapp'
+      const item = document.createElement('div')
+      item.className = 'list-item row'
+      item.innerHTML = `<div><div style="font-weight:600">${freq} ${type} report</div><div class="small">${freq} • ${channel} • ${recips.split(',').filter(Boolean).length} recipients</div></div><div><button class="btn btn-primary" onclick="sendNowSample()">Send Now</button></div>`
+      document.getElementById('scheduledList').insertBefore(item, document.getElementById('scheduledList').firstChild)
+      alert('Scheduled (simulated)')
+    })
+
+    // channel toggle behavior (visual)
+    document.getElementById('channelEmail').addEventListener('click', function(){ this.style.background='#2563eb'; this.style.color='white'; document.getElementById('channelWhats').style.background='#e6eefc'; document.getElementById('channelWhats').style.color='#0f172a'; })
+    document.getElementById('channelWhats').addEventListener('click', function(){ this.style.background='#16a34a'; this.style.color='white'; document.getElementById('channelEmail').style.background='#e6eefc'; document.getElementById('channelEmail').style.color='#0f172a'; })
+
+    // sample action for scheduled Send Now
+    window.sendNowSample = function() {
+      const csv = csvFromMetrics(sampleData)
+      const contentBase64 = base64FromString(csv)
+      const att = { filename: `scheduled-${Date.now()}.csv`, contentBase64 }
+      addSent('Scheduled: sample', 'email', att)
+      alert('Sent (simulated)')
+    }
+
+    // add an initial sent item sample
+    (function(){ const csv = csvFromMetrics(sampleData); addSent('Monthly Executive Summary', 'email', { filename: 'executive-sample.csv', contentBase64: base64FromString(csv) }) })()
+  </script>
+</body>
+</html>
